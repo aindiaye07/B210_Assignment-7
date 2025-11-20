@@ -1,0 +1,73 @@
+aindiaye07: Write a function that compares the “total_bill” for “Sun” at “Dinner” as compared to “Sat” at “Dinner” and save it to a CSV file.
+
+GitHub Copilot: Chat took too long to get ready. Please ensure you are signed in to GitHub and that the extension `GitHub.copilot-chat` is installed and enabled.
+
+aindiaye07: Write a function that compares the “total_bill” for “Sun” at “Dinner” as compared to “Sat” at “Dinner” and save it to a CSV file without pandas and with a file path for tips.csv
+
+GitHub Copilot: GitHub Copilot
+
+````python
+import csv
+import os
+from typing import Tuple, Dict
+
+def _aggregate_totals(file_path: str, day: str, time: str) -> Tuple[float, int]:
+    total = 0.0
+    count = 0
+    with open(file_path, newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row.get('day') == day and row.get('time') == time:
+                try:
+                    total += float(row.get('total_bill', 0) or 0)
+                    count += 1
+                except ValueError:
+                    # skip rows with non-numeric total_bill
+                    continue
+    return total, count
+
+def compare_total_bill(file_path: str, out_csv_path: str) -> Dict[str, float]:
+    """
+    Compare total_bill for Sun Dinner vs Sat Dinner and save comparison to CSV.
+    Returns a dict with computed values.
+    """
+    sun_total, sun_count = _aggregate_totals(file_path, 'Sun', 'Dinner')
+    sat_total, sat_count = _aggregate_totals(file_path, 'Sat', 'Dinner')
+
+    sun_avg = sun_total / sun_count if sun_count else 0.0
+    sat_avg = sat_total / sat_count if sat_count else 0.0
+    diff = sun_avg - sat_avg
+    pct_change = (diff / sat_avg * 100) if sat_avg != 0 else None
+
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(out_csv_path), exist_ok=True)
+
+    # Write results to CSV
+    with open(out_csv_path, 'w', newline='', encoding='utf-8') as out:
+        writer = csv.writer(out)
+        writer.writerow(['metric', 'Sun_Dinner', 'Sat_Dinner'])
+        writer.writerow(['count', sun_count, sat_count])
+        writer.writerow(['total_bill_sum', f'{sun_total:.2f}', f'{sat_total:.2f}'])
+        writer.writerow(['avg_total_bill', f'{sun_avg:.2f}', f'{sat_avg:.2f}'])
+        writer.writerow(['difference(Sun - Sat)', f'{diff:.2f}', ''])
+        writer.writerow(['percent_change_vs_Sat', f'{pct_change:.2f}%' if pct_change is not None else 'N/A', ''])
+
+    return {
+        'sun_count': sun_count,
+        'sat_count': sat_count,
+        'sun_total': sun_total,
+        'sat_total': sat_total,
+        'sun_avg': sun_avg,
+        'sat_avg': sat_avg,
+        'difference': diff,
+        'percent_change': pct_change,
+    }
+
+# Example usage
+if __name__ == '__main__':
+    tips_csv = r'c:\Users\Aissatou Ndiaye\Downloads\tips.csv'
+    out_csv = r'c:\Users\Aissatou Ndiaye\Downloads\tips_sun_vs_sat_comparison.csv'
+    result = compare_total_bill(tips_csv, out_csv)
+    print('Comparison saved to', out_csv)
+    print(result)
+````
